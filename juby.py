@@ -10,7 +10,7 @@ def bit_unpack(y):
     # 1000 > 945 = 3 * 63 * 5
     for i in range(1000):
         if y < 2**i:
-            bit_length = i
+            bit_length = i-1
             break
     bits = []
     for i in range(bit_length):
@@ -32,9 +32,9 @@ def bit_unpack_true(bits):
     tf = []
     for i in bits:
         if i == 1:
-            tf.append(str(true))
+            tf.append(True)
         elif i == 0:
-            tf.append(str(false))
+            tf.append(False)
     return tf
 
 
@@ -90,7 +90,7 @@ class PedersenHash:
     def bit_chunks(self, m):
         bits = bit_unpack(m)
         bit_length = len(bits)
-        if bit_length > 945:
+        if bit_length > 946:
             raise ValueError('Your message is too big')
         while (bit_length % 3) != 0:
             bits.append(0)
@@ -132,12 +132,11 @@ class PedersenHash:
         point = self.juby.zero
 
         for i in range(5):
-            print('computing ',i, ' position, for gen (', self.gens[i].x,', ', self.gens[i].y,'),',
-                  'where point is:(', hex(int(point.x)),', ', hex(int(point.y)),')')
+            print '> These are the chunks that will be encoded ', chunks[i]
+            print '> Computing', i, 'position, for gen (', hex(int(self.gens[i].x)), ',', hex(int(self.gens[i].y)), '),'
+            print '> where point is:(', hex(int(point.x)), ',', hex(int(point.y)), ')'
+            print ''
 
-            print('these are the chunks that will be encoded', chunks[i])
-            print(self.encoding_product(chunks[i]))
-            print(self.gens[i].scalar_mult(self.encoding_product(chunks[i])).x)
             point = point + self.gens[i].scalar_mult(self.encoding_product(chunks[i]) % rj)
 
         return point
@@ -226,7 +225,7 @@ def test_pedersen_hash(m):
     peder = PedersenHash(juby, gens)
 
     # print bits as array of true or false for rust comparison
-    print(bit_unpack_true(bit_unpack(m)))
+    print 'The message,',m,'has the following bit decomposition', bit_unpack_true(bit_unpack(m)),'\n'
 
     # return pedersen hash
     return peder.pedersen_hash(m)
@@ -249,6 +248,9 @@ if __name__ == '__main__':
     # trial where expected outcome of pedersen_hash(211111) is
     # 0x17f24895625db0f531472ea0d0ad0d691b4333774b6716693fa5e016dfe80ec2L
     m = 211111
-    print 'This is the pedersen hash: ' + test_pedersen_hash(m)
+    print 'This is the pedersen hash: '+ test_pedersen_hash(m)
 
+    # test vectors
+    #print 'This is the hash of all one bits: '+ test_pedersen_hash(2**946-1)
+    #print 'This is the hash of all 0 bits: ' + test_pedersen_hash(0)
 
